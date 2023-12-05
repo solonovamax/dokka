@@ -1,0 +1,22 @@
+#-------------------------------------------------------------------------------#
+#               Qodana analysis is configured by qodana.yaml file               #
+#             https://www.jetbrains.com/help/qodana/qodana-yaml.html            #
+#-------------------------------------------------------------------------------#
+version: "1.0"
+
+profile:
+  name: qodana.recommended
+
+projectJDK: 17 # 1.8 vs 17 vs 21?
+linter: jetbrains/qodana-jvm:latest
+
+#Enable inspections
+#include:
+#  - name: <SomeEnabledInspectionId>
+
+exclude:
+  - name: All
+    paths:
+      - dokka-integration-tests/maven/projects
+      - dokka-integration-tests/cli/projects
+      - dokka-integration-tests/gradle/projects
