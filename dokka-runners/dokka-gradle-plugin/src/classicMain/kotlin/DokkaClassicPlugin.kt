@@ -12,7 +12,6 @@ import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.withType
 import org.gradle.util.GradleVersion
 import org.jetbrains.dokka.DokkaDefaults
-import org.jetbrains.dokka.gradle.internal.PluginFeaturesService.Companion.pluginFeaturesService
 
 /**
  * The OG Dokka Gradle Plugin. A.K.A. DGP Classic, or Dokka V1.
@@ -24,16 +23,6 @@ open class DokkaClassicPlugin : Plugin<Project> {
         if (GradleVersion.version(project.gradle.gradleVersion) < GradleVersion.version("5.6")) {
             project.logger.warn("Dokka: Build is using unsupported gradle version, expected at least 5.6 but got ${project.gradle.gradleVersion}. This may result in strange errors")
         }
-
-        project.pluginFeaturesService.logV1Warning()
-
-        if (project.shouldUseK2())
-            project.logger.warn(
-                "Dokka's K2 Analysis is being used. " +
-                        "It is still under active development and is thus experimental. " +
-                        "It can be the cause of failed builds or incorrectly generated documentation. " +
-                        "If you encounter an issue, please consider reporting it: https://github.com/Kotlin/dokka/issues"
-            )
 
         project.setupDokkaTasks("dokkaHtml") {
             description = "Generates documentation in 'html' format"

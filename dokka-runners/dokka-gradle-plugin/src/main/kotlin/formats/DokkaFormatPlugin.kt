@@ -30,6 +30,7 @@ import org.jetbrains.dokka.gradle.dependencies.DokkaAttribute.Companion.DokkaCla
 import org.jetbrains.dokka.gradle.dependencies.DokkaAttribute.Companion.DokkaFormatAttribute
 import org.jetbrains.dokka.gradle.dependencies.FormatDependenciesManager
 import org.jetbrains.dokka.gradle.internal.DokkaInternalApi
+import org.jetbrains.dokka.gradle.internal.PluginFeaturesService.Companion.pluginFeaturesService
 import javax.inject.Inject
 
 /**
@@ -223,8 +224,14 @@ abstract class DokkaFormatPlugin(
                 dokkaPlugin(dokka("templating-plugin"))
                 dokkaPlugin(dokka("dokka-base"))
 
-                dokkaGenerator(dokka("analysis-kotlin-descriptors"))
                 dokkaGenerator(dokka("dokka-core"))
+                dokkaGenerator(
+                    if (project.pluginFeaturesService.enableK2Analysis) {
+                        dokka("analysis-kotlin-symbols")
+                    } else {
+                        dokka("analysis-kotlin-descriptors")
+                    }
+                )
                 dokkaGenerator("org.freemarker:freemarker" version freemarker)
                 dokkaGenerator("org.jetbrains:markdown" version jetbrainsMarkdown)
                 dokkaGenerator("org.jetbrains.kotlinx:kotlinx-coroutines-core" version kotlinxCoroutines)

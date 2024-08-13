@@ -6,6 +6,7 @@ package org.jetbrains.dokka.gradle.internal
 import org.gradle.api.Project
 import org.gradle.api.logging.Logging
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 import org.gradle.kotlin.dsl.extra
@@ -27,21 +28,22 @@ internal abstract class PluginFeaturesService : BuildService<PluginFeaturesServi
          */
         val enableV2Plugin: Property<Boolean>
 
-        /** If `true`, suppress [PluginFeaturesService.logV2Message]. */
+        /** If `true`, suppress the V2 mode message. */
         val suppressV2PluginMessage: Property<Boolean>
+
+        /** If `true`, enable K2 analysis. */
+        val enableK2Analysis: Property<Boolean>
+
+        /** If `true`, suppress the K2 analysis message. */
+        val suppressTryK2Message: Property<Boolean>
     }
 
-    internal val enableV2Plugin: Boolean get() = parameters.enableV2Plugin.get()
-    private val suppressV2PluginMessage: Boolean get() = parameters.suppressV2PluginMessage.get()
+    internal val enableV2Plugin: Boolean by lazy {
+        // use lazy {} to ensure messages are only logged once
 
-    /** Used to only log the V1 message once per project, regardless of how many subprojects there are. */
-    private var v1WarningLogged: Boolean = false
+        val v2Enabled = parameters.enableV2Plugin.getOrElse(false)
 
-    /** Used to only log the V2 message once per project, regardless of how many subprojects there are. */
-    private var v2MessageLogged: Boolean = false
-
-    fun logV1Warning() {
-        if (!v1WarningLogged) {
+        if (!v2Enabled) {
             logger.warn(
                 """
                 |⚠ Warning: Dokka Gradle Plugin V1 mode is enabled
@@ -60,12 +62,7 @@ internal abstract class PluginFeaturesService : BuildService<PluginFeaturesServi
                 |      https://github.com/Kotlin/dokka/issues/
                 """.trimMargin().surroundWithBorder()
             )
-            v1WarningLogged = true
-        }
-    }
-
-    fun logV2Message() {
-        if (!suppressV2PluginMessage && !v2MessageLogged) {
+        } else if (!parameters.suppressV2PluginMessage.getOrElse(false)) {
             logger.lifecycle(
                 """
                 |Dokka Gradle Plugin V2 is enabled ♡
@@ -82,12 +79,48 @@ internal abstract class PluginFeaturesService : BuildService<PluginFeaturesServi
                 |  to your project's `gradle.properties`
                 """.trimMargin().surroundWithBorder()
             )
-            v2MessageLogged = true
         }
+
+        v2Enabled
+    }
+
+    internal val enableK2Analysis: Boolean by lazy {
+        // use lazy {} to ensure messages are only logged once
+
+        val enableK2Analysis = parameters.enableK2Analysis.getOrElse(false)
+
+        if (enableK2Analysis && !parameters.suppressTryK2Message.getOrElse(false)) {
+            logger.lifecycle(
+                """
+                |Dokka K2 Analysis is enabled
+                |
+                |  This feature is Experimental and is still under active development.
+                |  It can cause build failures or incorrectly generated documentation. 
+                |
+                |  We would appreciate your feedback!
+                |  Please report any feedback or problems to Dokka GitHub Issues
+                |      https://github.com/Kotlin/dokka/issues/
+                """.trimMargin().surroundWithBorder()
+            )
+        }
+
+        enableK2Analysis
     }
 
     companion object {
         private val logger = Logging.getLogger(PluginFeaturesService::class.java)
+
+        internal const val V2_PLUGIN_ENABLED_FLAG =
+            "org.jetbrains.dokka.experimental.gradlePlugin.enableV2"
+
+        internal const val V2_PLUGIN_MESSAGE_SUPPRESSED_FLAG =
+            "org.jetbrains.dokka.experimental.gradlePlugin.suppressV2Message"
+
+        private const val K2_ANALYSIS_ENABLED_FLAG =
+            "org.jetbrains.dokka.experimental.tryK2"
+
+        private const val K2_ANALYSIS_MESSAGE_SUPPRESSED_FLAG =
+            "org.jetbrains.dokka.experimental.suppressTryK2Message"
 
         /**
          * Register a new [PluginFeaturesService], or get an existing instance.
@@ -98,16 +131,12 @@ internal abstract class PluginFeaturesService : BuildService<PluginFeaturesServi
                     parameters {
                         enableV2Plugin.set(getFlag(V2_PLUGIN_ENABLED_FLAG))
                         suppressV2PluginMessage.set(getFlag(V2_PLUGIN_MESSAGE_SUPPRESSED_FLAG))
+                        enableK2Analysis.set(getFlag(K2_ANALYSIS_ENABLED_FLAG))
+                        suppressTryK2Message.set(getFlag(K2_ANALYSIS_MESSAGE_SUPPRESSED_FLAG))
                     }
                 }.get()
 
-        internal const val V2_PLUGIN_ENABLED_FLAG =
-            "org.jetbrains.dokka.experimental.gradlePlugin.enableV2"
-
-        internal const val V2_PLUGIN_MESSAGE_SUPPRESSED_FLAG =
-            "org.jetbrains.dokka.experimental.gradlePlugin.suppressV2Message"
-
-        private fun Project.getFlag(flag: String): Boolean =
+        private fun Project.getFlag(flag: String): Provider<Boolean> =
             providers
                 .gradleProperty(flag)
                 .forUseAtConfigurationTimeCompat()
@@ -118,9 +147,7 @@ internal abstract class PluginFeaturesService : BuildService<PluginFeaturesServi
                         .provider { project.extra.properties[flag]?.toString() ?: "" }
                         .forUseAtConfigurationTimeCompat()
                 )
-                .orNull
-                .toBoolean()
-
+                .map(String::toBoolean)
 
         /**
          * Draw a pretty ascii border around some text.

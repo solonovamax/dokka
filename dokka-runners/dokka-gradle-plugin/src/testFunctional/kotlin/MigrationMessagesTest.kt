@@ -87,10 +87,8 @@ class MigrationMessagesTest : FunSpec({
                     .build {
                         test("output should contain any Dokka plugin message") {
                             output.shouldNotContainAnyOf(
-                                "Dokka Gradle Plugin V2 enabled",
-                                "Dokka Gradle Plugin classic mode",
+                                "Dokka Gradle Plugin V2",
                                 "https://kotl.in/dokka-gradle-migration",
-                                "https://github.com/Kotlin/dokka/issues/",
                                 "org.jetbrains.dokka.experimental.gradlePlugin",
                                 V2_PLUGIN_ENABLED_FLAG,
                                 V2_PLUGIN_MESSAGE_SUPPRESSED_FLAG,
