@@ -114,13 +114,13 @@ internal abstract class PluginFeaturesService : BuildService<PluginFeaturesServi
             "org.jetbrains.dokka.experimental.gradlePlugin.enableV2"
 
         internal const val V2_PLUGIN_MESSAGE_SUPPRESSED_FLAG =
-            "org.jetbrains.dokka.experimental.gradlePlugin.suppressV2Message"
+            "$V2_PLUGIN_ENABLED_FLAG.quiet"
 
         private const val K2_ANALYSIS_ENABLED_FLAG =
             "org.jetbrains.dokka.experimental.tryK2"
 
         private const val K2_ANALYSIS_MESSAGE_SUPPRESSED_FLAG =
-            "org.jetbrains.dokka.experimental.suppressTryK2Message"
+            "$K2_ANALYSIS_ENABLED_FLAG.quiet"
 
         /**
          * Register a new [PluginFeaturesService], or get an existing instance.
